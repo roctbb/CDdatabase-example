@@ -1,46 +1,6 @@
-from docutils.nodes import description
-from flask import Flask, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cd_collection.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-
-class Artist(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    description = db.Column(db.Text, nullable=True)
-
-
-# добавили модель для альбома
-class Album(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    description = db.Column(db.Text, nullable=True)
-    artist_id = db.Column(db.Integer, db.ForeignKey('artist.id', ondelete='CASCADE'), nullable=False)
-
-    artist = db.relationship('Artist', backref=db.backref('albums'))
-
-
-# презентер альбома
-def present_album(album):
-    return {
-        'id': album.id,
-        'name': album.name,
-        'description': album.description,
-    }
-
-
-def present_artist(artist):
-    return {
-        'id': artist.id,
-        'name': artist.name,
-        'description': artist.description,
-    }
+from manage import *
+from models import *
+from presenters import *
 
 
 @app.route('/api/artists', methods=['GET'])
