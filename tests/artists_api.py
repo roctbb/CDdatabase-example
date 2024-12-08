@@ -39,17 +39,24 @@ def update_artist_request(artist_id, name=None, description=None):
     )
 
 
-def create_album_request(name, description, artist_id):
+def create_album_request(name, description, artist_id, genres=[]):
     return requests.post(
         API_URL + 'artists/' + str(artist_id) + '/albums',
-        json={'name': name, 'description': description}
+        json={'name': name, 'description': description, 'genres': genres}
     )
 
+
+def update_album_request(album_id, name=None, description=None, genres=[]):
+    return requests.patch(
+        API_URL + 'albums/' + str(album_id),
+        json={'name': name, 'description': description, 'genres': genres}
+    )
 
 def get_albums_request(artist_id):
     return requests.get(
         API_URL + 'artists/' + str(artist_id) + '/albums'
     )
+
 
 def delete_album_request(album_id):
     return requests.delete(
@@ -57,7 +64,37 @@ def delete_album_request(album_id):
     )
 
 
+def add_genre_request(name):
+    return requests.post(
+        API_URL + 'genres',
+        json={'name': name}
+    )
+
+
+def get_genres_request():
+    return requests.get(API_URL + 'genres')
+
+
+def delete_genre_request(name):
+    return requests.delete(
+        API_URL + 'genres/' + str(name)
+    )
+
+
 def run_artists_api_tests():
+    # проверяем жанры
+    genre_response = add_genre_request('Jazz')
+    assert genre_response.status_code == 200
+
+    genre_response = add_genre_request('Rock')
+    assert genre_response.status_code == 200
+
+    genre_response = get_genres_request()
+    assert genre_response.status_code == 200
+    assert len(genre_response.json()) == 2
+
+    print("Genres creation tests passed!")
+
     # проверяем создание артистов
     artist_response1 = create_artist_request('Test Artist1', 'Description1')
     artist_response2 = create_artist_request('Test Artist2', 'Description2')
@@ -87,10 +124,10 @@ def run_artists_api_tests():
     print("Update artist tests passed!")
 
     # проверяем возможность добавления и удаления альбомов
-    album_response = create_album_request('Test Album1', 'Description1', artist_id1)
+    album_response = create_album_request('Test Album1', 'Description1', artist_id1, ['Rock'])
     assert album_response.status_code == 200
 
-    album_response = create_album_request('Test Album2', 'Description2', artist_id1)
+    album_response = create_album_request('Test Album2', 'Description2', artist_id1, ['Jazz'])
     assert album_response.status_code == 200
 
     album_response = get_albums_request(artist_id1)
@@ -99,6 +136,22 @@ def run_artists_api_tests():
 
     album_id1 = album_response.json()[0].get('id')
     album_id2 = album_response.json()[1].get('id')
+
+    print('Albums creation tests passed!')
+
+
+    album_response = update_album_request(
+        album_id1,
+        name='Updated Album1',
+        description='Updated Description1',
+        genres=['Rock', 'Jazz'])
+
+    assert album_response.status_code == 200
+
+    album_response = get_albums_request(artist_id1)
+    assert len(set(album_response.json()[0]['genres']).intersection(['Rock', 'Jazz'])) == 2
+    print('Update album tests passed!')
+
 
     album_response = delete_album_request(album_id1)
     assert album_response.status_code == 200
@@ -109,7 +162,7 @@ def run_artists_api_tests():
     assert album_response.status_code == 200
     assert len(album_response.json()) == 0
 
-    print("Album creation tests passed!")
+    print("Album deletion tests passed!")
 
     # проверяем, что нельзя задать артисту уже использованное имя при обновлении
     artist_response = update_artist_request(artist_id1, 'Test Artist2')
@@ -139,7 +192,15 @@ def run_artists_api_tests():
     # удаляем второго артиста из базы
     artist_response = delete_artist_request(artist_id2)
     assert artist_response.status_code == 200
-    print("All tests passed!")
+    print("Artist deletion passed!")
+
+    # удаляем жанры
+    delete_genre_request('Rock')
+    delete_genre_request('Jazz')
+
+    genre_response = get_genres_request()
+    assert len(genre_response.json()) == 0
+    print("Genres deletion passed!")
 
 
 if __name__ == '__main__':

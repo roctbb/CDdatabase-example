@@ -4,6 +4,7 @@ from presenters import *
 
 albums = Blueprint('albums', __name__)
 
+
 @albums.route('/<int:album_id>', methods=['PATCH'])
 def update_album(album_id):
     album = Album.query.filter_by(id=album_id).first()
@@ -27,6 +28,25 @@ def update_album(album_id):
             return jsonify({'reason': 'Missing description'}), 400
 
         album.description = description
+
+    if 'genres' in data:
+        requested_genres = data.get('genres')
+
+        # проверяем, что жанры передали списком
+        if not isinstance(requested_genres, list):
+            return jsonify({'reason': 'Genres must be a list'}), 400
+
+        # проверяем, что все жанры есть в базе
+        genres = []
+        for requested_genre in requested_genres:
+            genre = Genre.query.filter_by(name=requested_genre).first()
+
+            if not genre:
+                return jsonify({'reason': f'Genre {requested_genre} not found'}), 400
+
+            genres.append(genre)
+        # изменяем список жанров
+        album.genres = genres
 
     db.session.commit()
 

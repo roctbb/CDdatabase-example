@@ -4,6 +4,7 @@ from presenters import *
 
 artists = Blueprint('artists', __name__)
 
+
 @artists.route('', methods=['GET'])
 def get_all_artists():
     artists = Artist.query.all()
@@ -99,12 +100,27 @@ def add_album(id):
     data = request.get_json()
     name = data.get('name')
     description = data.get('description')
+    requested_genres = data.get('genres', None)
 
     if not name or not description:
         return jsonify({'reason': 'Missing name or description'}), 400
 
-    # не забываем указать id исполнителя
-    album = Album(name=name, description=description, artist_id=id)
+    # проверяем, что жанры передали списком
+    if not isinstance(requested_genres, list):
+        return jsonify({'reason': 'Genres must be a list'}), 400
+
+    # проверяем, что все жанры есть в базе
+    genres = []
+    for requested_genre in requested_genres:
+        genre = Genre.query.filter_by(name=requested_genre).first()
+
+        if not genre:
+            return jsonify({'reason': f'Genre {requested_genre} not found'}), 400
+
+        genres.append(genre)
+
+    # создаем альбом с указанием списка жанров
+    album = Album(name=name, description=description, artist_id=id, genres=genres)
     db.session.add(album)
     db.session.commit()
 
