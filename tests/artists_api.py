@@ -51,9 +51,9 @@ def get_albums_request(artist_id):
         API_URL + 'artists/' + str(artist_id) + '/albums'
     )
 
-def delete_album_request(artist_id, album_id):
+def delete_album_request(album_id):
     return requests.delete(
-        API_URL + 'artists/' + str(artist_id) + '/albums/' + str(album_id)
+        API_URL + 'albums/' + str(album_id)
     )
 
 
@@ -100,9 +100,9 @@ def run_artists_api_tests():
     album_id1 = album_response.json()[0].get('id')
     album_id2 = album_response.json()[1].get('id')
 
-    album_response = delete_album_request(artist_id1, album_id1)
+    album_response = delete_album_request(album_id1)
     assert album_response.status_code == 200
-    album_response = delete_album_request(artist_id1, album_id2)
+    album_response = delete_album_request(album_id2)
     assert album_response.status_code == 200
 
     album_response = get_albums_request(artist_id1)
