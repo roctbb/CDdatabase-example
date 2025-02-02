@@ -9,4 +9,4 @@ app.register_blueprint(genres, url_prefix='/api/genres')
 
 if __name__ == '__main__':
     # запускаем сервер
-    app.run(debug=True, port=8000)
+    app.run(debug=True, port=3000)
